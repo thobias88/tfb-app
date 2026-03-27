@@ -17,11 +17,22 @@ if 'favorites' not in st.session_state:
     st.session_state.favorites = []
 
 # --- 3. ESTILIZAÇÃO CUSTOMIZADA (DARK & GOLD PREMIUM) ---
-st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-    html, body, [class*="css"] { font-family: 'Inter', sans-serif; background-color: #0b0d10; }
-    .main { background-color: #0b0d10; color: #e0e0e0; }
+st.markdown(f"""
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: #888; font-size: 11px;">{row['League']}</span>
+        <span class="{badge_class}">{status}</span>
+    </div>
+    <h3 style="margin: 8px 0; font-size: 20px;">{row['Match']}</h3>
+    <div style="background-color: #0e1117; padding: 5px; border-radius: 5px; text-align: center; margin-bottom: 10px;">
+        <span style="color: #d4af37; font-size: 12px; font-weight: bold;">PALPITE: ABAIXO DE 2.5 GOLS</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: #d4af37; font-size: 28px; font-weight: bold;">{row['Prob']}%</span>
+        <span style="color: #00ff41; font-size: 13px;">Tendência: {row['Trend']}</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
     /* Centralizar o logotipo */
     .logo-container { text-align: center; margin-bottom: 20px; }
