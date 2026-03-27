@@ -89,6 +89,7 @@ df = get_analysis_data()
 
 # 5. INTERFACE DO APP
 st.markdown("<h1 style='text-align: center; color: #d4af37;'>🏆 THE FATHER BETS</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #00ff41; font-weight: bold;'>MERCADO EXCLUSIVO: ABAIXO DE 2.5 GOLS (UNDER)</p>", unsafe_allow_html=True)
 
 tab1, tab2 = st.tabs(["📊 DASHBOARD", "⭐ SAVED"])
 
@@ -106,19 +107,22 @@ with tab1:
         status = "HIGH" if is_high else "MEDIUM"
         
         with st.container():
-            st.markdown(f"""
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: #888; font-size: 11px;">{row['League']}</span>
-                    <span class="{badge_class}">{status}</span>
-                </div>
-                <h3 style="margin: 8px 0; font-size: 20px;">{row['Match']}</h3>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: #d4af37; font-size: 28px; font-weight: bold;">{row['Prob']}%</span>
-                    <span style="color: #00ff41; font-size: 13px;">Trend: {row['Trend']}</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+      st.markdown(f"""
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: #888; font-size: 11px;">{row['League']}</span>
+        <span class="{badge_class}">{status}</span>
+    </div>
+    <h3 style="margin: 8px 0; font-size: 20px;">{row['Match']}</h3>
+    <div style="background-color: #0e1117; padding: 5px; border-radius: 5px; text-align: center; margin-bottom: 10px;">
+        <span style="color: #d4af37; font-size: 12px; font-weight: bold;">PALPITE: ABAIXO DE 2.5 GOLS</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: #d4af37; font-size: 28px; font-weight: bold;">{row['Prob']}%</span>
+        <span style="color: #00ff41; font-size: 13px;">Tendência: {row['Trend']}</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
             
             # Análise Detalhada (Breakdown)
             with st.expander("🔍 Detalhes da Análise"):
