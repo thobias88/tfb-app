@@ -94,7 +94,7 @@ tab1, tab2 = st.tabs(["📊 DASHBOARD", "⭐ SAVED"])
 
 with tab1:
     # Filtro de Confiança
-    min_conf = st.select_slider("Filtro de Confiança %", options=[50, 60, 70, 75, 80, 85, 90], value=65)
+    min_conf = st.select_slider("Filtro de Confiança %", options=[50, 60, 65, 70, 75, 80, 85, 90], value=65)
     filtered = df[df['Prob'] >= min_conf]
 
     if filtered.empty:
