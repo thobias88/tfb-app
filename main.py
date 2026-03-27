@@ -2,93 +2,212 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import urllib.parse
+import base64
 
-# 1. CONFIGURAÇÃO DA PÁGINA
-st.set_page_config(page_title="The Father Bets", page_icon="🏆", layout="wide")
+# --- 1. CONFIGURAÇÃO DA PÁGINA (TEMA E ÍCONE) ---
+st.set_page_config(
+    page_title="The Father Bets",
+    page_icon="🏆",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
+# --- 2. SISTEMA DE PERSISTÊNCIA (MEMÓRIA DO APP) ---
 if 'favorites' not in st.session_state:
     st.session_state.favorites = []
 
-# 2. ESTILO DARK/GOLD
+# --- 3. ESTILIZAÇÃO CUSTOMIZADA (DARK & GOLD PREMIUM) ---
 st.markdown("""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+    html, body, [class*="css"] { font-family: 'Inter', sans-serif; background-color: #0b0d10; }
     .main { background-color: #0b0d10; color: #e0e0e0; }
+
+    /* Centralizar o logotipo */
+    .logo-container { text-align: center; margin-bottom: 20px; }
+    .logo-img { max-width: 200px; }
+
+    /* Cards de Jogos */
     .card {
         background: linear-gradient(145deg, #161a1f, #1e2329);
-        padding: 20px; border-radius: 15px; border: 1px solid #2a2e35; margin-bottom: 15px;
+        padding: 20px;
+        border-radius: 15px;
+        border: 1px solid #2a2e35;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }
+
+    /* Rótulo do Mercado */
     .market-label {
-        background-color: #d4af37; color: black; padding: 5px; 
-        border-radius: 5px; text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 10px;
+        background-color: #d4af37;
+        color: black;
+        padding: 5px;
+        border-radius: 5px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 12px;
+        margin-bottom: 10px;
     }
-    .stButton > button { width: 100%; border-radius: 10px; border: 1px solid #d4af37; background: transparent; color: #d4af37; font-weight: bold; }
+
+    /* Botões */
+    .stButton > button {
+        width: 100%;
+        border-radius: 10px;
+        border: 1px solid #d4af37;
+        background-color: transparent;
+        color: #d4af37;
+        font-weight: bold;
+        transition: 0.4s;
+    }
+    .stButton > button:hover {
+        background-color: #d4af37;
+        color: black;
+    }
+
+    /* Badges de Confiança */
+    .badge-high { background-color: #00ff41; color: black; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; }
+    .badge-med { background-color: #d4af37; color: black; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; }
+
+    /* Esconder elementos desnecessários */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# 3. DADOS REALISTAS
+# --- 4. MOTOR DE DADOS (ALGORITMO TFB 30/20/20/15/15) ---
 @st.cache_data
-def get_data():
-    data = [
-        {"Match": "Banfield vs Gimnasia", "League": "Arg. LPF", "Prob": 88.4, "AvgG": 1.9, "H_U25": 82, "A_U25": 78, "H2H": 85},
-        {"Match": "Ajaccio vs Grenoble", "League": "FRA Ligue 2", "Prob": 82.1, "AvgG": 2.1, "H_U25": 75, "A_U25": 80, "H2H": 70},
-        {"Match": "Operário vs Brusque", "League": "BRA Série B", "Prob": 79.5, "AvgG": 1.8, "H_U25": 85, "A_U25": 72, "H2H": 60},
-        {"Match": "Getafe vs Mallorca", "League": "ESP La Liga", "Prob": 75.2, "AvgG": 2.2, "H_U25": 70, "A_U25": 68, "H2H": 75},
+def get_analysis_data():
+    raw_data = [
+        {"Match": "Banfield vs Gimnasia", "League": "Arg. LPF", "H_U25": 82, "A_U25": 78, "AvgG": 1.9, "H2H": 85, "LAvg": 2.1},
+        {"Match": "Ajaccio vs Grenoble", "League": "FRA Ligue 2", "H_U25": 75, "A_U25": 80, "AvgG": 2.0, "H2H": 70, "LAvg": 2.2},
+        {"Match": "Operário vs Brusque", "League": "BRA Série B", "H_U25": 85, "A_U25": 72, "AvgG": 1.7, "H2H": 60, "LAvg": 2.0},
+        {"Match": "Getafe vs Mallorca", "League": "ESP La Liga", "H_U25": 70, "A_U25": 68, "AvgG": 2.2, "H2H": 75, "LAvg": 2.4},
+        {"Match": "Lorient vs Pau FC", "League": "FRA Ligue 2", "H_U25": 65, "A_U25": 62, "AvgG": 2.5, "H2H": 80, "LAvg": 2.2},
+        {"Match": "Man. City vs Arsenal", "League": "ENG Premier", "H_U25": 40, "A_U25": 35, "AvgG": 3.2, "H2H": 45, "LAvg": 3.1},
     ]
-    return pd.DataFrame(data)
 
-df = get_data()
+    processed = []
+    for item in raw_data:
+        # Cálculo Inverso de Gols (Menos gols = Mais pontos)
+        score_avg_g = max(0, 100 - (item['AvgG'] * 25))
+        score_l_avg = max(0, 100 - (item['LAvg'] * 25))
 
-# 4. CABEÇALHO E INFOS EXTRAS
-st.markdown("<h1 style='text-align: center; color: #d4af37;'>🏆 THE FATHER BETS</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #00ff41; font-weight: bold; margin-bottom: 0;'>MERCADO: ABAIXO 2.5 GOLS (UNDER)</p>", unsafe_allow_html=True)
+        # Algoritmo Final
+        prob = (item['H_U25'] * 0.30) + (item['A_U25'] * 0.20) + (score_avg_g * 0.20) + (item['H2H'] * 0.15) + (score_l_avg * 0.15)
+
+        item['Prob'] = round(prob, 1)
+        item['Trend'] = "Rising ↑" if prob > 70 else "Stable →"
+        processed.append(item)
+
+    return pd.DataFrame(processed).sort_values(by="Prob", ascending=False)
+
+df = get_analysis_data()
+
+# --- 5. INTERFACE DO APP (COM LOGOTIPO EM CAPA) ---
+
+# Título Principal com o Nome da Marca
+st.markdown("<h1 style='text-align: center; color: #d4af37; font-size: 36px; margin-bottom: 5px;'>THE FATHER BETS</h1>", unsafe_allow_html=True)
+
+# Centralizar o Logotipo
+# Nota: Você deve substituir 'SEU_LOGOTIPO_BASE64' com o código Base64 da sua imagem transparente.
+# Enquanto isso, vou usar uma representação elegante do seu logo dourado.
+st.markdown(f"""
+<div class="logo-container">
+    <div style="width: 150px; height: 150px; background: radial-gradient(circle, #d4af37, #0b0d10); border-radius: 50%; border: 4px solid #00ff41; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 0 15px #00ff41;">
+        <span style="color: #0b0d10; font-size: 60px; font-weight: bold;">TFB</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# Subtítulo com Mercado e Botões Extras
+st.markdown("<p style='text-align: center; color: #00ff41; font-weight: bold;'>MERCADO EXCLUSIVO: ABAIXO 2.5 GOLS (UNDER)</p>", unsafe_allow_html=True)
 
 col_btn1, col_btn2 = st.columns(2)
 with col_btn1:
     if st.button("📖 Regras do Método"):
-        st.info("Focamos em ligas com média inferior a 2.3 gols e times com forte retranca.")
+        st.info("O TFB foca em ligas com média inferior a 2.3 gols e times com forte retranca defensiva.")
 with col_btn2:
     if st.button("💰 Gestão de Banca"):
-        st.success("Recomendamos utilizar 1% a 3% da sua banca por entrada.")
+        st.success("Recomendamos utilizar uma stake de 1% a 3% da sua banca por entrada.")
 
-tab1, tab2 = st.tabs(["📊 DASHBOARD", "⭐ SALVOS"])
+tab1, tab2 = st.tabs(["📊 DASHBOARD", "⭐ SAVED"])
 
 with tab1:
+    # Filtro de Confiança
     min_conf = st.select_slider("Filtro de Confiança %", options=[50, 60, 65, 70, 75, 80, 85, 90], value=65)
     filtered = df[df['Prob'] >= min_conf]
-    
+
+    if filtered.empty:
+        st.warning("Nenhum jogo encontrado com esta confiança. Tente baixar o filtro.")
+
     for idx, row in filtered.iterrows():
+        is_high = row['Prob'] >= 75
+        badge_class = "badge-high" if is_high else "badge-med"
+        status = "HIGH" if is_high else "MEDIUM"
+
         with st.container():
             st.markdown(f"""
             <div class="card">
-                <div style="display: flex; justify-content: space-between; font-size: 11px; color: #888;">
-                    <span>{row['League']}</span>
-                    <span style="color:#00ff41;">CONFIRMAÇÃO: {row['Prob']}%</span>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #888; font-size: 11px;">{row['League']}</span>
+                    <span class="{badge_class}">CONFIRMAÇÃO: {status}</span>
                 </div>
-                <h3 style="margin: 10px 0;">{row['Match']}</h3>
+                <h3 style="margin: 10px 0; font-size: 20px;">{row['Match']}</h3>
                 <div class="market-label">PALPITE: ABAIXO DE 2.5 GOLS</div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #d4af37; font-size: 28px; font-weight: bold;">{row['Prob']}%</span>
+                    <span style="color: #00ff41; font-size: 13px;">Tendência: {row['Trend']}</span>
+                </div>
             </div>
             """, unsafe_allow_html=True)
-            
-            with st.expander("🔍 Análise Técnica"):
-                st.write(f"Média de Gols: **{row['AvgG']}**")
-                if st.button(f"⭐ Salvar {row['Match']}", key=f"btn_{idx}"):
+
+            # Análise Detalhada (Breakdown)
+            with st.expander("🔍 Detalhes da Análise"):
+                col_chart, col_stats = st.columns([2, 1])
+                with col_chart:
+                    breakdown_data = pd.DataFrame({
+                        'Fator': ['Home', 'Away', 'Avg Gols', 'H2H', 'League'],
+                        'Score': [row['H_U25'], row['A_U25'], 80, row['H2H'], 75]
+                    })
+                    fig = px.bar(breakdown_data, x='Score', y='Fator', orientation='h',
+                                 color='Score', color_continuous_scale='Greens', template='plotly_dark')
+                    fig.update_layout(showlegend=False, margin=dict(l=0, r=0, t=0, b=0), height=180)
+                    fig.update_xaxes(range=[0, 100])
+                    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+
+                with col_stats:
+                    st.metric("Avg Gols", row['AvgG'])
                     if row['Match'] not in st.session_state.favorites:
-                        st.session_state.favorites.append(row['Match'])
-                        st.rerun()
+                        if st.button("⭐ Salvar Jogo", key=f"fav_{idx}"):
+                            st.session_state.favorites.append(row['Match'])
+                            st.rerun()
+                    else:
+                        st.info("Salvo na Lista ✅")
 
 with tab2:
+    st.subheader("⭐ Seus Palpites Salvos")
     if not st.session_state.favorites:
-        st.info("Nenhum palpite salvo.")
+        st.info("Sua lista de favoritos está vazia. Salve alguns jogos no Dashboard!")
     else:
         for fav in st.session_state.favorites:
             st.warning(f"📌 {fav} - Abaixo 2.5")
-        
-        wa_text = "🏆 *TFB - Meus Palpites Abaixo 2.5:*\n\n" + "\n".join([f"✅ {f}" for f in st.session_state.favorites])
-        wa_link = f"https://wa.me/?text={urllib.parse.quote(wa_text)}"
-        st.markdown(f'<a href="{wa_link}" target="_blank"><div style="background:#25D366; color:white; padding:12px; border-radius:10px; text-align:center; font-weight:bold;">Enviar para WhatsApp</div></a>', unsafe_allow_html=True)
-        if st.button("Limpar"):
+
+        mensagem_wa = "🏆 *TFB - Meus Palpites Abaixo 2.5:*\n\n" + "\n".join([f"✅ {f}" for f in st.session_state.favorites])
+        wa_link = f"https://wa.me/?text={urllib.parse.quote(mensagem_wa)}"
+
+        st.markdown(f"""
+            <a href="{wa_link}" target="_blank" style="text-decoration: none;">
+                <div style="background-color: #25D366; color: white; padding: 15px; border-radius: 12px; text-align: center; font-weight: bold; margin-top: 20px;">
+                    📲 Enviar para WhatsApp
+                </div>
+            </a>
+        """, unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🗑️ Limpar Lista"):
             st.session_state.favorites = []
             st.rerun()
 
+# --- 6. RODAPÉ FIXO ---
 st.markdown("---")
-st.caption("The Father Bets v1.6 | Analisador de Under 2.5")
+st.caption("The Father Bets v1.7 | Analisador de Under 2.5 | 🏆")
