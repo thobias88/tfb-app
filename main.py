@@ -4,7 +4,7 @@ import requests
 from datetime import datetime, timedelta
 
 # 1. CONFIGURAÇÃO DA PÁGINA
-st.set_page_config(page_title="The Father Bets", page_icon="🏆", layout="wide")
+st.set_page_config(page_title="The Father Bets", page_icon="🏆", layout="blue")
 
 # SUA CHAVE CONFIGURADA
 API_KEY = "44665fca0ce33f498cb33f98d882c65f"
