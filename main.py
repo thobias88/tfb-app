@@ -17,7 +17,7 @@ st.markdown("""
     }
     .main-title {
         text-align: center;
-        color: #d4af37;
+        color: #3c0ceb;
         font-size: 40px;
         font-weight: bold;
         margin-bottom: 0px;
