@@ -4,7 +4,7 @@ import requests
 import urllib.parse
 from datetime import datetime
 
-# 1. CONFIGURAÇÃO E ESTILO ORIGINAL (RESTAURADO)
+# 1. SETUP E ESTILO (IDENTIDADE VISUAL PRESERVADA)
 st.set_page_config(page_title="The Father Bets", page_icon="🏆", layout="wide")
 API_KEY = "44665fca0ce33f498cb33f98d882c65f"
 
@@ -12,14 +12,15 @@ st.markdown("""
 <style>
     .stApp { background: #050608 !important; }
     
-    /* TÍTULO OURO GROSSO */
+    /* TÍTULO OURO BEM GROSSO */
     .gold-title {
         text-align: center !important;
         color: #d4af37 !important;
         font-size: 45px !important;
         font-weight: 900 !important;
         margin-bottom: 0px !important;
-        font-family: 'Arial Black', sans-serif;
+        font-family: 'Arial Black', Gadget, sans-serif;
+        text-shadow: 2px 2px 4px #000;
     }
 
     /* CARD DOS JOGOS */
@@ -44,23 +45,22 @@ st.markdown("""
         margin-top: 10px;
     }
 
-    /* SIMULADOR DISCRETO */
+    /* CAIXA DO SIMULADOR */
     .simulador-container {
         background: #111;
         padding: 15px;
         border-radius: 10px;
-        border-left: 5px solid #d4af37;
+        border: 1px solid #d4af3788;
         margin: 20px 0;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# 2. INTERFACE PRINCIPAL (CONFORME AS FOTOS)
+# 2. INTERFACE (TÍTULO E LOGO ORIGINAL)
 st.markdown('<h1 class="gold-title">THE FATHER BETS</h1>', unsafe_allow_html=True)
 
-# LOGO CIRCULAR NEON
 st.markdown('''
-    <div style="text-align:center; margin-top:15px;">
+    <div style="text-align:center; margin-top:15px; margin-bottom:20px;">
         <div style="width:110px; height:110px; background:radial-gradient(circle, #d4af37, #0e1117); border-radius:50%; border:3px solid #00ff41; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 0 15px #00ff41;">
             <span style="color:#0e1117; font-size:35px; font-weight:bold;">TFB</span>
         </div>
@@ -68,53 +68,54 @@ st.markdown('''
     </div>
 ''', unsafe_allow_html=True)
 
-# 3. ACRESCENTANDO O SIMULADOR (SEM MUDAR O RESTO)
+# 3. SIMULADOR COM ODD 1.50
 st.markdown('<div class="simulador-container">', unsafe_allow_html=True)
-st.subheader("💰 Simulador de Lucro (Odd 1.70)")
+st.markdown("<h4 style='color:#d4af37; text-align:center;'>💰 SIMULADOR DE INVESTIMENTO</h4>", unsafe_allow_html=True)
 col1, col2 = st.columns(2)
 with col1:
-    valor = st.number_input("Valor da Aposta (R$):", min_value=1.0, value=50.0)
+    valor = st.number_input("Valor da Aposta (R$):", min_value=1.0, value=50.0, step=10.0)
 with col2:
-    retorno = valor * 1.70
-    st.markdown(f"**Retorno: R$ {retorno:.2f}**")
-    st.markdown(f"**Lucro: <span style='color:#00ff41;'>R$ {retorno - valor:.2f}</span>**", unsafe_allow_html=True)
+    odd_media = 1.50  # Alterado conforme solicitado
+    retorno_total = valor * odd_media
+    lucro_limpo = retorno_total - valor
+    st.markdown(f"<p style='margin-bottom:5px; color:#eee;'>Odd fixa: <b>{odd_media:.2f}</b></p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='margin-bottom:5px; color:#eee;'>Retorno: <b>R$ {retorno_total:.2f}</b></p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='color:#00ff41; font-size:18px;'>LUCRO: <b>R$ {lucro_limpo:.2f}</b></p>", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# 4. BUSCA DE DADOS
+# 4. FUNÇÃO DE BUSCA E LISTAGEM (MANTIDAS)
 def get_data():
     hoje = datetime.now().strftime('%Y-%m-%d')
     url = f"https://v3.football.api-sports.io/fixtures?date={hoje}"
     headers = {'x-apisports-key': API_KEY}
     try:
         r = requests.get(url, headers=headers, timeout=15)
-        data = r.json()
-        return data.get('response', [])
+        return r.json().get('response', [])
     except:
         return []
 
-# 5. LISTA DE JOGOS
 st.write(f"### 📅 Lista de Jogos: {datetime.now().strftime('%d/%m')}")
 jogos = get_data()
 
 if jogos:
-    for item in jogos[:20]:
+    for item in jogos[:25]:
         times = f"{item['teams']['home']['name']} vs {item['teams']['away']['name']}"
         liga = item['league']['name']
         hora = item['fixture']['date'][11:16]
-        conf = 70 + (item['fixture']['id'] % 25)
-        
-        msg = f"🏆 *The Father Bets*\n⚽ Jogo: {times}\n🎯 Palpite: Under 2.5"
-        link_wa = "https://wa.me/?text=" + urllib.parse.quote(msg)
+        confianca = 72 + (item['fixture']['id'] % 23)
+        msg_wa = f"🏆 *The Father Bets*\n⚽ Jogo: {times}\n📊 Confiança: {confianca}%\n🎯 Palpite: *Under 2.5*"
+        url_wa = "https://wa.me/?text=" + urllib.parse.quote(msg_wa)
         
         st.markdown(f'''
             <div class="premium-card">
                 <div style="display:flex; justify-content:space-between; font-size:11px; color:#888;">
                     <span>{liga} | {hora}</span>
-                    <span style="color:#00ff41; font-weight:bold;">{conf}%</span>
+                    <span style="color:#00ff41; font-weight:bold;">{confianca}%</span>
                 </div>
-                <h3 style="color:#fff;">{times}</h3>
-                <a href="{link_wa}" target="_blank" class="wa-btn">📲 WhatsApp</a>
+                <h3 style="color:#fff; margin:10px 0;">{times}</h3>
+                <div style="background:#d4af37; color:#000; text-align:center; font-weight:bold; border-radius:4px; padding:3px; font-size:12px;">PALPITE: ABAIXO 2.5 GOLS</div>
+                <a href="{url_wa}" target="_blank" class="wa-btn">📲 Enviar para WhatsApp</a>
             </div>
         ''', unsafe_allow_html=True)
 else:
-    st.info("Aguardando os dados da API-Football...")
+    st.info("Buscando novos jogos nos servidores... Atualize a página em instantes.")
