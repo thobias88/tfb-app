@@ -1,146 +1,68 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 import urllib.parse
 
-# 1. SETUP E PERSISTÊNCIA
+# 1. SETUP
 st.set_page_config(page_title="The Father Bets", page_icon="🏆", layout="wide")
 
 if 'favorites' not in st.session_state:
     st.session_state.favorites = []
 
-# 2. ESTILO VISUAL PREMIUM (BASEADO NA FOTO 2)
-# Esta seção redesenha toda a interface com gradientes escuros e elementos dourados complexos
+# 2. ESTILO DARK FORÇADO (RÚSTICO)
 st.markdown("""
 <style>
-/* Fundo Rústico Gradiente Escuro (Texturizado) */
-.stApp {
-    background: radial-gradient(circle, #0e1117 0%, #050608 100%) !important;
-    background-attachment: fixed;
-}
-[data-testid="stAppViewContainer"] {
-    background: transparent !important;
-}
-
-/* Tipografia Premium (Semelhante à Foto 2) */
-@import url('https://fonts.googleapis.com/css2?family=Marcellus&display=swap');
-h1, h2, h3, p, span, div, label {
-    font-family: 'Marcellus', serif !important;
-    color: #e0e0e0 !important;
-}
-
-/* Cabeçalho Dourado Premium */
-h1 {
-    text-align: center;
-    color: #d4af37 !important;
-    font-size: 38px !important;
-    margin-bottom: -15px !important;
-    letter-spacing: 2px;
-}
-
-/* Rótulo de Mercado (Under) - Fonte e Cor ajustadas */
-.market-under-label {
-    text-align: center;
-    color: #d4af37 !important;
-    font-weight: bold;
-    font-size: 14px;
-    margin-top: -10px;
-    margin-bottom: 30px;
-    text-transform: uppercase;
-}
-
-/* === LOGOTIPO DOURADO COMPLEXO (VISUAL DA FOTO 2) === */
-.premium-logo-container {
-    text-align: center;
-    margin-bottom: 25px;
-    margin-top: 20px;
-}
-
-.premium-logo-outer {
-    width: 160px;
-    height: 160px;
-    background: transparent;
-    border-radius: 50%;
-    border: 3px solid #00ff41; /* Círculo Verde Brilhante Externo */
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 20px #00ff41, inset 0 0 10px rgba(212, 175, 55, 0.5);
-    position: relative;
-}
-
-.premium-logo-inner {
-    width: 120px;
-    height: 120px;
-    background: #0e1117;
-    border-radius: 50%;
-    border: 3px solid #d4af37; /* Círculo Dourado Interno */
-    position: relative;
-    overflow: hidden;
-}
-
-/* Desenho da Letra 'F', Seta e Jogador */
-.logo-element {
-    position: absolute;
-    background-color: #d4af37; /* Cor Dourada para Elementos */
-}
-
-/* 'F' vertical bar */
-.logo-f-v { width: 12px; height: 70px; left: 35px; top: 25px; }
-/* 'F' top bar */
-.logo-f-h1 { width: 40px; height: 10px; left: 35px; top: 25px; }
-/* 'F' mid bar */
-.logo-f-h2 { width: 25px; height: 10px; left: 35px; top: 50px; }
-
-/* Tendency Arrow */
-.logo-arrow {
-    width: 0; height: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-bottom: 20px solid #d4af37;
-    left: 80px; top: 35px;
-    transform: rotate(45deg);
-}
-
-/* Soccer Player (Esquema simples representativo) */
-.logo-player {
-    width: 25px; height: 40px;
-    background: #d4af37;
-    border-radius: 50% 50% 0 0;
-    left: 80px; top: 70px;
-}
-.logo-player:after {
-    content: '';
-    position: absolute;
-    width: 15px; height: 15px;
-    background: #00ff41; /* Bola Verde */
-    border-radius: 50%;
-    left: 20px; top: 25px;
-}
+.stApp, [data-testid="stAppViewContainer"] { background-color: #101216 !important; color: white !important; }
+h1, h2, h3, p, span, div, label { color: #e0e0e0 !important; }
+.card { background-color: #1a1e24 !important; padding: 20px; border-radius: 15px; border: 1px solid #d4af3733; margin-bottom: 15px; }
+.market-label { background-color: #d4af37 !important; color: black !important; padding: 6px; border-radius: 6px; text-align: center; font-weight: bold; margin-bottom: 10px; }
+.stButton > button { width: 100%; border-radius: 10px; border: 1px solid #d4af37 !important; background: transparent !important; color: #d4af37 !important; font-weight: bold; }
 </style>
 """, unsafe_allow_html=True)
 
-# 3. INTERFACE DO APP (VISUAL PREMIUM APLICADO)
+# 3. DADOS
+data = [
+    {"Match": "Banfield vs Gimnasia", "League": "Arg. LPF", "Prob": 88.4, "AvgG": 1.9},
+    {"Match": "Ajaccio vs Grenoble", "League": "FRA Ligue 2", "Prob": 82.1, "AvgG": 2.1},
+    {"Match": "Operário vs Brusque", "League": "BRA Série B", "Prob": 79.5, "AvgG": 1.8},
+    {"Match": "Getafe vs Mallorca", "League": "ESP La Liga", "Prob": 75.2, "AvgG": 2.2}
+]
+df = pd.DataFrame(data)
 
-# Cabeçalho da Marca
-st.markdown("<h1>THE FATHER BETS</h1>", unsafe_allow_html=True)
+# 4. CABEÇALHO COM LOGO
+st.markdown("<h1 style='text-align: center; color: #d4af37;'>THE FATHER BETS</h1>", unsafe_allow_html=True)
+st.markdown('<div style="text-align:center;"><div style="width:120px; height:120px; background:radial-gradient(circle, #d4af37, #101216); border-radius:50%; border:3px solid #00ff41; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 0 15px #00ff41;"><span style="color:#101216; font-size:45px; font-weight:bold;">TFB</span></div></div>', unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #00ff41; font-weight: bold; margin-top:10px;'>MERCADO EXCLUSIVO: ABAIXO 2.5 GOLS (UNDER)</p>", unsafe_allow_html=True)
 
-# Centralizar o Logotipo Premium Complexo (Visual da Foto 2)
-st.markdown("""
-<div class="premium-logo-container">
-    <div class="premium-logo-outer">
-        <div class="premium-logo-inner">
-            <div class="logo-element logo-f-v"></div>
-            <div class="logo-element logo-f-h1"></div>
-            <div class="logo-element logo-f-h2"></div>
-            <div class="logo-element logo-arrow"></div>
-            <div class="logo-element logo-player"></div>
-        </div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+# 5. BOTÕES DE INFO
+c1, c2 = st.columns(2)
+with c1:
+    if st.button("📖 Regras"): st.info("Foco em ligas com média < 2.3 gols.")
+with c2:
+    if st.button("💰 Gestão"): st.success("Use 1% a 3% da banca.")
 
-# Subtítulo de Mercado (Ajustado)
-st.markdown("<p class='market-under-label'>MERCADO EXCLUSIVO: ABAIXO 2.5 GOLS (UNDER)</p>", unsafe_allow_html=True)
+# 6. DASHBOARD
+t1, t2 = st.tabs(["📊 JOGOS", "⭐ SALVOS"])
 
-# --- FIM DO CÓDIGO VISUAL PREMIUM ---
-# (Restante do código de funcionalidade mantido para que o app continue funcionando)
+with t1:
+    conf = st.select_slider("Confiança %", options=[50, 60, 65, 70, 75, 80, 85, 90], value=65)
+    filt = df[df['Prob'] >= conf]
+    for i, r in filt.iterrows():
+        st.markdown(f'<div class="card"><div style="display:flex; justify-content:space-between; font-size:11px; color:#888;"><span>{r["League"]}</span><span style="color:#00ff41;">{r["Prob"]}%</span></div><h3 style="margin:10px 0;">{r["Match"]}</h3><div class="market-label">PALPITE: ABAIXO 2.5 GOLS</div></div>', unsafe_allow_html=True)
+        with st.expander("🔍 Detalhes"):
+            st.write(f"Média de Gols: {r['AvgG']}")
+            if st.button(f"Salvar {r['Match']}", key=f"s_{i}"):
+                if r['Match'] not in st.session_state.favorites:
+                    st.session_state.favorites.append(r['Match'])
+                    st.rerun()
+
+with t2:
+    if not st.session_state.favorites:
+        st.info("Lista vazia.")
+    else:
+        for f in st.session_state.favorites: st.warning(f"📌 {f} - Abaixo 2.5")
+        txt = urllib.parse.quote("🏆 *TFB Palpites:*\n" + "\n".join(st.session_state.favorites))
+        st.markdown(f'<a href="https://wa.me/?text={txt}" target="_blank"><div style="background:#25D366; color:white; padding:12px; border-radius:10px; text-align:center; font-weight:bold;">WhatsApp</div></a>', unsafe_allow_html=True)
+        if st.button("Limpar"):
+            st.session_state.favorites = []
+            st.rerun()
