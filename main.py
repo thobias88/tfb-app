@@ -77,7 +77,7 @@ def buscar_dados():
         return []
 
 # 5. MOSTRAR RESULTADOS
-st.write(f"### 📅 Palpites para Amanhã: { (datetime.now() + timedelta(days=1)).strftime('%d/%m') }")
+st.write(f"### 📅 Palpites: { (datetime.now() + timedelta(days=1)).strftime('%d/%m') }")
 
 with st.spinner('Conectando ao servidor de futebol...'):
     lista = buscar_dados()
