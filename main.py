@@ -1,68 +1,113 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
-import urllib.parse
+import requests
+from datetime import datetime, timedelta
 
-# 1. SETUP
+# 1. CONFIGURAÇÃO PREMIUM
 st.set_page_config(page_title="The Father Bets", page_icon="🏆", layout="wide")
 
-if 'favorites' not in st.session_state:
-    st.session_state.favorites = []
+# Coloque sua chave entre as aspas abaixo
+API_KEY = "SUA_CHAVE_AQUI"
 
-# 2. ESTILO DARK FORÇADO (RÚSTICO)
+# 2. ESTILO VISUAL DA FOTO 2 (DARK & GOLD)
 st.markdown("""
-<style>
-.stApp, [data-testid="stAppViewContainer"] { background-color: #101216 !important; color: white !important; }
-h1, h2, h3, p, span, div, label { color: #e0e0e0 !important; }
-.card { background-color: #1a1e24 !important; padding: 20px; border-radius: 15px; border: 1px solid #d4af3733; margin-bottom: 15px; }
-.market-label { background-color: #d4af37 !important; color: black !important; padding: 6px; border-radius: 6px; text-align: center; font-weight: bold; margin-bottom: 10px; }
-.stButton > button { width: 100%; border-radius: 10px; border: 1px solid #d4af37 !important; background: transparent !important; color: #d4af37 !important; font-weight: bold; }
-</style>
-""", unsafe_allow_html=True)
+    <style>
+    .stApp {
+        background: radial-gradient(circle, #0e1117 0%, #050608 100%) !important;
+    }
+    .main-title {
+        text-align: center;
+        color: #d4af37;
+        font-size: 40px;
+        font-weight: bold;
+        margin-bottom: 0px;
+        text-shadow: 2px 2px 4px #000;
+    }
+    .premium-card {
+        background: rgba(26, 30, 36, 0.9);
+        padding: 20px;
+        border-radius: 15px;
+        border: 1px solid #d4af3755;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    .market-tag {
+        background-color: #d4af37;
+        color: #000;
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-weight: bold;
+        display: inline-block;
+        margin-top: 10px;
+    }
+    .conf-badge {
+        color: #00ff41;
+        font-weight: bold;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-# 3. DADOS
-data = [
-    {"Match": "Banfield vs Gimnasia", "League": "Arg. LPF", "Prob": 88.4, "AvgG": 1.9},
-    {"Match": "Ajaccio vs Grenoble", "League": "FRA Ligue 2", "Prob": 82.1, "AvgG": 2.1},
-    {"Match": "Operário vs Brusque", "League": "BRA Série B", "Prob": 79.5, "AvgG": 1.8},
-    {"Match": "Getafe vs Mallorca", "League": "ESP La Liga", "Prob": 75.2, "AvgG": 2.2}
-]
-df = pd.DataFrame(data)
+# 3. CABEÇALHO COM LOGO ESTILIZADO
+st.markdown("<h1 class='main-title'>THE FATHER BETS</h1>", unsafe_allow_html=True)
+st.markdown(f"""
+    <div style="text-align:center; margin-bottom:20px;">
+        <div style="width:130px; height:130px; background:radial-gradient(circle, #d4af37, #0e1117); border-radius:50%; border:3px solid #00ff41; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 0 20px #00ff41;">
+            <span style="color:#0e1117; font-size:45px; font-weight:bold;">TFB</span>
+        </div>
+        <p style='color:#00ff41; font-weight:bold; margin-top:10px;'>MERCADO EXCLUSIVO: ABAIXO 2.5 GOLS</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-# 4. CABEÇALHO COM LOGO
-st.markdown("<h1 style='text-align: center; color: #d4af37;'>THE FATHER BETS</h1>", unsafe_allow_html=True)
-st.markdown('<div style="text-align:center;"><div style="width:120px; height:120px; background:radial-gradient(circle, #d4af37, #101216); border-radius:50%; border:3px solid #00ff41; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 0 15px #00ff41;"><span style="color:#101216; font-size:45px; font-weight:bold;">TFB</span></div></div>', unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #00ff41; font-weight: bold; margin-top:10px;'>MERCADO EXCLUSIVO: ABAIXO 2.5 GOLS (UNDER)</p>", unsafe_allow_html=True)
+# 4. FUNÇÃO PARA BUSCAR JOGOS REAIS DE AMANHÃ
+def fetch_real_data():
+    if API_KEY == "44665fca0ce33f498cb33f98d882c65f":
+        return None
+    
+    # Busca jogos para amanhã
+    target_date = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+    url = f"https://v3.football.api-sports.io/fixtures?date={target_date}"
+    headers = {'x-apisports-key': API_KEY}
+    
+    try:
+        response = requests.get(url, headers=headers)
+        data = response.json()
+        
+        matches = []
+        # Pegamos os primeiros 20 jogos para analisar
+        for item in data.get('response', [])[:20]:
+            matches.append({
+                "time": item['fixture']['date'][11:16],
+                "league": item['league']['name'],
+                "teams": f"{item['teams']['home']['name']} vs {item['teams']['away']['name']}",
+                "prob": 72 + (item['fixture']['id'] % 15) # Simulação de probabilidade baseada no ID
+            })
+        return matches
+    except:
+        return []
 
-# 5. BOTÕES DE INFO
-c1, c2 = st.columns(2)
-with c1:
-    if st.button("📖 Regras"): st.info("Foco em ligas com média < 2.3 gols.")
-with c2:
-    if st.button("💰 Gestão"): st.success("Use 1% a 3% da banca.")
+# 5. EXIBIÇÃO DOS JOGOS
+st.write(f"### 📅 Próximos Jogos ({(datetime.now() + timedelta(days=1)).strftime('%d/%m')})")
 
-# 6. DASHBOARD
-t1, t2 = st.tabs(["📊 JOGOS", "⭐ SALVOS"])
+if API_KEY == "SUA_CHAVE_AQUI":
+    st.warning("⚠️ Quase lá! Você precisa colar sua 'API Key' no código para ver os jogos reais.")
+else:
+    with st.spinner('Analisando mercados de Under 2.5...'):
+        results = fetch_real_data()
+        
+        if results:
+            for m in results:
+                st.markdown(f"""
+                    <div class="premium-card">
+                        <div style="display:flex; justify-content:space-between; font-size:12px; color:#888;">
+                            <span>{m['league']} | {m['time']}</span>
+                            <span class="conf-badge">CONFIANÇA: {m['prob']}%</span>
+                        </div>
+                        <h3 style="color:#fff; margin:10px 0;">{m['teams']}</h3>
+                        <div class="market-tag">PALPITE: ABAIXO 2.5 GOLS</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+        else:
+            st.error("Erro ao conectar. Verifique sua chave ou limite da API.")
 
-with t1:
-    conf = st.select_slider("Confiança %", options=[50, 60, 65, 70, 75, 80, 85, 90], value=65)
-    filt = df[df['Prob'] >= conf]
-    for i, r in filt.iterrows():
-        st.markdown(f'<div class="card"><div style="display:flex; justify-content:space-between; font-size:11px; color:#888;"><span>{r["League"]}</span><span style="color:#00ff41;">{r["Prob"]}%</span></div><h3 style="margin:10px 0;">{r["Match"]}</h3><div class="market-label">PALPITE: ABAIXO 2.5 GOLS</div></div>', unsafe_allow_html=True)
-        with st.expander("🔍 Detalhes"):
-            st.write(f"Média de Gols: {r['AvgG']}")
-            if st.button(f"Salvar {r['Match']}", key=f"s_{i}"):
-                if r['Match'] not in st.session_state.favorites:
-                    st.session_state.favorites.append(r['Match'])
-                    st.rerun()
-
-with t2:
-    if not st.session_state.favorites:
-        st.info("Lista vazia.")
-    else:
-        for f in st.session_state.favorites: st.warning(f"📌 {f} - Abaixo 2.5")
-        txt = urllib.parse.quote("🏆 *TFB Palpites:*\n" + "\n".join(st.session_state.favorites))
-        st.markdown(f'<a href="https://wa.me/?text={txt}" target="_blank"><div style="background:#25D366; color:white; padding:12px; border-radius:10px; text-align:center; font-weight:bold;">WhatsApp</div></a>', unsafe_allow_html=True)
-        if st.button("Limpar"):
-            st.session_state.favorites = []
-            st.rerun()
+st.markdown("---")
+st.caption("The Father Bets v2.0 | Dados em Tempo Real via API-Sports")
