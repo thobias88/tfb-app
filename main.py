@@ -49,7 +49,7 @@ st.markdown(f"""
         <div style="width:130px; height:130px; background:radial-gradient(circle, #d4af37, #0e1117); border-radius:50%; border:3px solid #00ff41; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 0 20px #00ff41;">
             <span style="color:#0e1117; font-size:45px; font-weight:bold;">TFB</span>
         </div>
-        <p style='color:#00ff41; font-weight:bold; margin-top:10px;'>ANÁLISE REAL: ABAIXO 2.5 GOLS</p>
+        <p style='color:#1862f5; font-weight:bold; margin-top:10px;'>ANÁLISE REAL: ABAIXO 2.5 GOLS</p>
     </div>
     """, unsafe_allow_html=True)
 
