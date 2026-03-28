@@ -31,7 +31,7 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(0,0,0,0.6);
     }
     .market-tag {
-        background-color: #d4af37;
+        background-color: #f7e625;
         color: #000;
         padding: 5px 12px;
         border-radius: 6px;
