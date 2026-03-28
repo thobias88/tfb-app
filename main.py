@@ -47,28 +47,26 @@ st.markdown('</div>', unsafe_allow_html=True)
  timedelta(days=1)).strftime('%Y-%m-%d')
    def get_all_possible_matches():
     headers = {'x-apisports-key': API_KEY}
-    data_hoje = datetime.now().strftime('%Y-%m-%d')
-    url = f"https://v3.football.api-sports.io/fixtures?date={data_hoje}"
+    datas_para_tentar = [
+        datetime.now().strftime('%Y-%m-%d'),
+        (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d'),
+        (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+    ]
     
-    try:
-        r = requests.get(url, headers=headers, timeout=15)
-        status_code = r.status_code
-        resposta = r.json()
-        
-        # Se der erro, isso vai aparecer no seu app para sabermos o que é
-        if status_code != 200:
-            st.error(f"Erro da API: Status {status_code}")
-            return []
+    all_found = []
+    for data in datas_para_tentar:
+        try:
+            url = f"https://v3.football.api-sports.io/fixtures?date={data}"
+            r = requests.get(url, headers=headers, timeout=10)
+            res = r.json().get('response', [])
+            if res:
+                all_found.extend(res)
+                if len(all_found) > 40: break # Limite para não travar
+        except:
+            continue
+    return all_found
             
-        if 'errors' in resposta and resposta['errors']:
-            # Se a chave estiver errada ou sem plano, o erro aparecerá aqui
-            st.warning(f"Mensagem da API: {resposta['errors']}")
-            return []
-            
-        return resposta.get('response', [])
-    except Exception as e:
-        st.error(f"Falha na conexão: {e}")
-        return [] 
+         
 
 
 # 5. LISTAGEM
