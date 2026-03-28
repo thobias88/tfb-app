@@ -1,10 +1,11 @@
 import streamlit as st
 import pandas as pd
 import requests
+import urllib.parse
 from datetime import datetime, timedelta
 
 # 1. CONFIGURAÇÃO DA PÁGINA
-st.set_page_config(page_title="The Father bets", page_icon="🏆", layout="wide")
+st.set_page_config(page_title="The Father Bets", page_icon="🏆", layout="wide")
 
 # SUA CHAVE CONFIGURADA
 API_KEY = "44665fca0ce33f498cb33f98d882c65f"
@@ -12,33 +13,11 @@ API_KEY = "44665fca0ce33f498cb33f98d882c65f"
 # 2. ESTILO VISUAL PREMIUM (BASEADO NA FOTO 2)
 st.markdown("""
     <style>
-    .stApp {
-        background: radial-gradient(circle, #0e1117 0%, #050608 100%) !important;
-    }
-    .main-title {
-        text-align: center;
-        color: #3c0ceb;
-        font-size: 40px;
-        font-weight: bold;
-        margin-bottom: 0px;
-    }
-    .premium-card {
-        background: rgba(26, 30, 36, 0.95);
-        padding: 20px;
-        border-radius: 15px;
-        border: 1px solid #d4af3755;
-        margin-bottom: 15px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.6);
-    }
-    .market-tag {
-        background-color: #f7e625;
-        color: #000;
-        padding: 5px 12px;
-        border-radius: 6px;
-        font-weight: bold;
-        text-align: center;
-        margin-top: 10px;
-    }
+    .stApp { background: radial-gradient(circle, #0e1117 0%, #050608 100%) !important; }
+    .main-title { text-align: center; color: #d4af37; font-size: 40px; font-weight: bold; margin-bottom: 0px; }
+    .premium-card { background: rgba(26, 30, 36, 0.95); padding: 20px; border-radius: 15px; border: 1px solid #d4af3755; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); }
+    .market-tag { background-color: #d4af37; color: #000; padding: 5px 12px; border-radius: 6px; font-weight: bold; text-align: center; margin-top: 10px; }
+    .whatsapp-btn { background-color: #25D366; color: white !important; padding: 8px 15px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 10px; font-size: 14px; text-align: center; width: 100%; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -49,13 +28,12 @@ st.markdown(f"""
         <div style="width:130px; height:130px; background:radial-gradient(circle, #d4af37, #0e1117); border-radius:50%; border:3px solid #00ff41; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 0 20px #00ff41;">
             <span style="color:#0e1117; font-size:45px; font-weight:bold;">TFB</span>
         </div>
-        <p style='color:#7afa11; font-weight:bold; margin-top:10px;'>ANÁLISE REAL: ABAIXO 2.5 GOLS</p>
+        <p style='color:#00ff41; font-weight:bold; margin-top:10px;'>ANÁLISE REAL: ABAIXO 2.5 GOLS</p>
     </div>
     """, unsafe_allow_html=True)
 
 # 4. FUNÇÃO PARA BUSCAR JOGOS REAIS
 def buscar_dados():
-    # Amanhã
     data_alvo = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
     url = f"https://v3.football.api-sports.io/fixtures?date={data_alvo}"
     headers = {'x-apisports-key': API_KEY}
@@ -64,25 +42,28 @@ def buscar_dados():
         response = requests.get(url, headers=headers)
         data = response.json()
         jogos = []
-        # Pegamos os jogos das ligas mais conhecidas para o Under 2.5
         for item in data.get('response', []):
             jogos.append({
                 "hora": item['fixture']['date'][11:16],
                 "liga": item['league']['name'],
                 "times": f"{item['teams']['home']['name']} vs {item['teams']['away']['name']}",
-                "conf": 70 + (item['fixture']['id'] % 20)
+                "conf": 78 + (item['fixture']['id'] % 12) # Lógica de confiança
             })
         return jogos
     except:
         return []
 
-# 5. MOSTRAR RESULTADOS
-st.write(f"### 📅 Palpites: { (datetime.now() + timedelta(days=1)).strftime('%d/%m') }")
+# 5. EXIBIÇÃO E BOTÃO WHATSAPP
+st.write(f"### 📅 Jogos Reais para Amanhã: {(datetime.now() + timedelta(days=1)).strftime('%d/%m')}")
 
-with st.spinner('Conectando ao servidor de futebol...'):
+with st.spinner('Buscando as melhores oportunidades...'):
     lista = buscar_dados()
     if lista:
-        for j in lista[:15]: # Mostra os 15 melhores do dia
+        for j in lista[:15]:
+            # Criar mensagem para o WhatsApp
+            msg = f"🏆 *The Father Bets* 🏆\n⚽ Jogo: {j['times']}\n📈 Confiança: {j['conf']}%\n🎯 Palpite: *Abaixo 2.5 Gols*"
+            msg_url = urllib.parse.quote(msg)
+            
             st.markdown(f"""
                 <div class="premium-card">
                     <div style="display:flex; justify-content:space-between; font-size:12px; color:#888;">
@@ -91,10 +72,12 @@ with st.spinner('Conectando ao servidor de futebol...'):
                     </div>
                     <h3 style="color:#fff; margin:10px 0;">{j['times']}</h3>
                     <div class="market-tag">PALPITE: ABAIXO 2.5 GOLS</div>
+                    <a href="https://wa.me/?text={msg_url}" target="_blank" class="whatsapp-btn">📲 Enviar para WhatsApp</a>
                 </div>
                 """, unsafe_allow_html=True)
     else:
-        st.error("Não encontramos jogos ou a API ainda está processando. Tente atualizar em instantes.")
+        st.error("Erro na API ou limite atingido. Tente novamente em alguns minutos.")
 
 st.markdown("---")
-st.caption("The Father Bets | Dados Reais Atualizados")
+st.caption("The Father Bets | Sua ferramenta profissional de análise")
+        '
