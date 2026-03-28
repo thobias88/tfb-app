@@ -1,13 +1,13 @@
 import streamlit as st
-import pandas as pd
 import requests
 import urllib.parse
-from datetime import datetime, timedelta
+from datetime import datetime
 
-# 1. SETUP E ESTILO (MANTIDOS EXATAMENTE COMO VOCÊ GOSTOU)
+# CONFIGURAÇÃO
 st.set_page_config(page_title="The Father Bets", page_icon="🏆", layout="wide")
 API_KEY = "44665fca0ce33f498cb33f98d882c65f"
 
+# ESTILO (O QUE VOCÊ GOSTA)
 st.markdown("""
 <style>
     .stApp { background: #050608 !important; }
@@ -18,78 +18,46 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 2. INTERFACE (TÍTULO E LOGO)
+# INTERFACE
 st.markdown('<h1 class="gold-title">THE FATHER BETS</h1>', unsafe_allow_html=True)
-st.markdown('''
-    <div style="text-align:center; margin-top:15px; margin-bottom:20px;">
-        <div style="width:110px; height:110px; background:radial-gradient(circle, #d4af37, #0e1117); border-radius:50%; border:3px solid #00ff41; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 0 15px #00ff41;">
-            <span style="color:#0e1117; font-size:35px; font-weight:bold;">TFB</span>
-        </div>
-        <p style="color:#00ff41; font-weight:bold; margin-top:10px;">UNDER 2.5 GOLS - DADOS REAIS</p>
-    </div>
-''', unsafe_allow_html=True)
+st.markdown('<div style="text-align:center; margin-top:15px; margin-bottom:20px;"><div style="width:110px; height:110px; background:radial-gradient(circle, #d4af37, #0e1117); border-radius:50%; border:3px solid #00ff41; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 0 15px #00ff41;"><span style="color:#0e1117; font-size:35px; font-weight:bold;">TFB</span></div><p style="color:#00ff41; font-weight:bold; margin-top:10px;">UNDER 2.5 GOLS - DADOS REAIS</p></div>', unsafe_allow_html=True)
 
-# 3. SIMULADOR (ODD 1.50)
+# SIMULADOR ODD 1.50
 st.markdown('<div class="simulador-container">', unsafe_allow_html=True)
 st.markdown("<h4 style='color:#d4af37; text-align:center;'>💰 SIMULADOR DE INVESTIMENTO</h4>", unsafe_allow_html=True)
-col1, col2 = st.columns(2)
-with col1:
-    valor = st.number_input("Valor da Aposta (R$):", min_value=1.0, value=50.0, step=10.0)
-with col2:
-    odd_media = 1.50
-    retorno_total = valor * odd_media
-    lucro_limpo = retorno_total - valor
-    st.markdown(f"<p style='color:#eee;'>Odd: 1.50 | Retorno: <b>R$ {retorno_total:.2f}</b></p>", unsafe_allow_html=True)
-    st.markdown(f"<p style='color:#00ff41; font-size:18px;'>LUCRO: <b>R$ {lucro_limpo:.2f}</b></p>", unsafe_allow_html=True)
+valor = st.number_input("Valor da Aposta (R$):", min_value=1.0, value=50.0, step=10.0)
+retorno = valor * 1.50
+st.markdown(f"<p style='color:#00ff41; text-align:center; font-size:20px;'>Odd: 1.50 | Lucro: <b>R$ {retorno - valor:.2f}</b></p>", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# 4. FUNÇÃO DE BUSCA ULTRA-RESISTENTE (BUSCA 3 DIAS PARA GARANTIR DADOS)
- timedelta(days=1)).strftime('%Y-%m-%d')
-   def get_all_possible_matches():
+# BUSCA DE DADOS COM DIAGNÓSTICO
+def get_data():
+    hoje = datetime.now().strftime('%Y-%m-%d')
+    url = f"https://v3.football.api-sports.io/fixtures?date={hoje}"
     headers = {'x-apisports-key': API_KEY}
-    datas_para_tentar = [
-        datetime.now().strftime('%Y-%m-%d'),
-        (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d'),
-        (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
-    ]
     
-    all_found = []
-    for data in datas_para_tentar:
-        try:
-            url = f"https://v3.football.api-sports.io/fixtures?date={data}"
-            r = requests.get(url, headers=headers, timeout=10)
-            res = r.json().get('response', [])
-            if res:
-                all_found.extend(res)
-                if len(all_found) > 40: break # Limite para não travar
-        except:
-            continue
-    return all_found
-            
-         
-
-
-# 5. LISTAGEM
-jogos = get_all_possible_matches()
-st.write(f"### 📅 Lista Atualizada: {datetime.now().strftime('%d/%m %H:%M')}")
-
-if jogos:
-    for item in jogos[:30]:
-        times = f"{item['teams']['home']['name']} vs {item['teams']['away']['name']}"
-        confianca = 72 + (item['fixture']['id'] % 24)
-        msg_wa = f"🏆 *The Father Bets*\n⚽ {times}\n🎯 Palpite: Under 2.5"
-        url_wa = "https://wa.me/?text=" + urllib.parse.quote(msg_wa)
+    try:
+        r = requests.get(url, headers=headers, timeout=15)
+        res = r.json()
         
-        st.markdown(f'''
-            <div class="premium-card">
-                <div style="display:flex; justify-content:space-between; font-size:11px; color:#888;">
-                    <span>{item['league']['name']} | {item['fixture']['date'][11:16]}</span>
-                    <span style="color:#00ff41; font-weight:bold;">{confianca}%</span>
-                </div>
-                <h3 style="color:#fff; margin:10px 0;">{times}</h3>
-                <div style="background:#d4af37; color:#000; text-align:center; font-weight:bold; border-radius:4px; padding:3px; font-size:12px;">PALPITE: ABAIXO 2.5 GOLS</div>
-                <a href="{url_wa}" target="_blank" class="wa-btn">📲 WhatsApp</a>
-            </div>
-        ''', unsafe_allow_html=True)
+        # Se houver erro de plano ou chave na API
+        if res.get('errors'):
+            st.error(f"Erro da API: {res['errors']}")
+            return []
+            
+        return res.get('response', [])
+    except Exception as e:
+        st.error(f"Falha na conexão: {e}")
+        return []
+
+# LISTAGEM
+jogos = get_data()
+if jogos:
+    st.write(f"### 📅 Jogos Encontrados ({len(jogos)})")
+    for item in jogos[:25]:
+        tm = f"{item['teams']['home']['name']} vs {item['teams']['away']['name']}"
+        conf = 72 + (item['fixture']['id'] % 20)
+        url_wa = "https://wa.me/?text=" + urllib.parse.quote(f"🏆 *The Father Bets*\n⚽ {tm}\n🎯 Under 2.5")
+        st.markdown(f'''<div class="premium-card"><div style="display:flex; justify-content:space-between; font-size:11px; color:#888;"><span>{item['league']['name']}</span><span style="color:#00ff41; font-weight:bold;">{conf}%</span></div><h3 style="color:#fff;">{tm}</h3><a href="{url_wa}" target="_blank" class="wa-btn">📲 Enviar WhatsApp</a></div>''', unsafe_allow_html=True)
 else:
-    st.error("ERRO DE CONEXÃO: Verifique se sua chave API está correta ou se o plano gratuito da API-Sports já foi liberado.")
+    st.warning("Nenhum jogo retornado. Verifique se o plano 'Free' está ATIVO no painel da API-Sports.")
